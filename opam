@@ -1,0 +1,25 @@
+opam-version: "1.2"
+name: "asp"
+version: "dev"
+maintainer: "yallop@gmail.com"
+authors: ["Neel Krishnaswami <nk480@cl.cam.ac.uk>"
+          "Jeremy Yallop <yallop@gmail.com>"]
+homepage: "https://github.com/yallop/ocaml-asp"
+dev-repo: "http://github.com/yallop/ocaml-asp.git"
+bug-reports: "http://github.com/yallop/ocaml-asp/issues"
+license: "MIT"
+build: [[make]]
+build-test: [[make "test" "bench"]]
+install: [[make "install"]]
+remove: [["ocamlfind" "remove" "asp"]]
+depends: [
+   "ocamlfind"  {build}
+   "ocamlbuild" {build}
+
+   "letrec"
+
+   "core_bench"      {test}
+   "ounit"           {test}
+   "conf-python-2-7" {test}
+]
+available: [ compiler = "4.04.0+BER" ]
