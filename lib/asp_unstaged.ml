@@ -244,7 +244,10 @@ module Parse (Tag : Types.TAG) = struct
                    star (data g1) p1
       | Var n -> ParseEnv.lookup penv n
       | Fix g' -> let open ParseEnv in
-                  let rec p s = parse g' (p :: penv) s in
+                  let r = ref (fun s -> assert false) in 
+                  let p s = !r s in 
+                  let q = parse g' (p :: penv) in
+                  r := q;
                   p
   end
 
