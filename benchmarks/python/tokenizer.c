@@ -36,6 +36,25 @@ extern char *PyOS_Readline(FILE *, FILE *, const char *);
 /* Return malloc'ed string including trailing \n;
    empty malloc'ed string for EOF;
    NULL if interrupted */
+char *
+PyOS_Readline(FILE *sys_stdin, FILE *sys_stdout, const char *prompt)
+{
+    size_t n = 1000;
+    char *p = (char *)malloc(n);
+    char *q;
+    if (p == NULL)
+        return NULL;
+    fprintf(stderr, "%s", prompt);
+    q = fgets(p, n, sys_stdin);
+    if (q == NULL) {
+        *p = '\0';
+        return p;
+    }
+    n = strlen(p);
+    if (n > 0 && p[n-1] != '\n')
+        p[n-1] = '\n';
+    return (char *)realloc(p, n+1);
+}
 
 /* Don't ever change this -- it would break the portability of Python code */
 #define TABSIZE 8
