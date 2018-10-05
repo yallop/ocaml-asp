@@ -4,7 +4,9 @@
 extern "C" {
 #endif
 
-#include "object.h"
+/* #include "object.h" */
+
+#include <stdio.h> /* FILE */
 
 /* Tokenizer interface */
 
