@@ -80,7 +80,7 @@ extern "C" {
 #define ISEOF(x)                ((x) == ENDMARKER)
 
 
-const char * _PyParser_TokenNames[]; /* Token names */
+extern const char * _PyParser_TokenNames[]; /* Token names */
 int PyToken_OneChar(int);
 int PyToken_TwoChars(int, int);
 int PyToken_ThreeChars(int, int, int);
