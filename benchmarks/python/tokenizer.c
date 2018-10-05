@@ -9,9 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h> /* ssize_t */
+#include <unistd.h> /* dup */
 
 #include "tokenizer.h"
 #include "errcode.h"
+
+#define Py_CHARMASK(c) ((unsigned char)((c) & 0xff))
 
 /* Alternate tab spacing */
 #define ALTTABSIZE 1
@@ -425,7 +428,8 @@ tok_nextc(struct tok_state *tok)
         }
         if (tok->done != E_OK) {
             if (tok->prompt != NULL)
-                PySys_WriteStderr("\n");
+                /* PySys_WriteStderr("\n"); */
+              fputc('\n', stderr);
             tok->cur = tok->inp;
             return EOF;
         }
@@ -441,7 +445,7 @@ tok_backup(struct tok_state *tok, int c)
 {
     if (c != EOF) {
         if (--tok->cur < tok->buf)
-            Py_FatalError("tok_backup: beginning of buffer");
+          assert (((void)"tok_backup: beginning of buffer", 0));
         if (*tok->cur != c)
             *tok->cur = c;
     }
@@ -1169,7 +1173,7 @@ PyTokenizer_Get(struct tok_state *tok, char **p_start, char **p_end)
    by the caller. */
 
 char *
-PyTokenizer_FindEncodingFilename(int fd, PyObject *filename)
+PyTokenizer_FindEncodingFilename(int fd, void *filename)
 {
     struct tok_state *tok;
     FILE *fp;
