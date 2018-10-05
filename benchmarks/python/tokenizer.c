@@ -10,14 +10,6 @@
 #include "tokenizer.h"
 #include "errcode.h"
 
-#ifndef PGEN
-#include "unicodeobject.h"
-#include "bytesobject.h"
-#include "fileobject.h"
-#include "codecs.h"
-#include "abstract.h"
-#endif /* PGEN */
-
 /* Alternate tab spacing */
 #define ALTTABSIZE 1
 
@@ -143,11 +135,6 @@ tok_new(void)
     tok->enc = NULL;
     tok->encoding = NULL;
     tok->cont_line = 0;
-#ifndef PGEN
-    tok->filename = NULL;
-    tok->decoding_readline = NULL;
-    tok->decoding_buffer = NULL;
-#endif
 
     return tok;
 }
@@ -164,8 +151,6 @@ new_string(const char *s, Py_ssize_t len, struct tok_state *tok)
     result[len] = '\0';
     return result;
 }
-
-#ifdef PGEN
 
 static char *
 decoding_fgets(char *s, int size, struct tok_state *tok)
@@ -184,622 +169,6 @@ decode_str(const char *str, int exec_input, struct tok_state *tok)
 {
     return new_string(str, strlen(str), tok);
 }
-
-#else /* PGEN */
-
-static char *
-error_ret(struct tok_state *tok) /* XXX */
-{
-    tok->decoding_erred = 1;
-    if (tok->fp != NULL && tok->buf != NULL) /* see PyTokenizer_Free */
-        PyMem_FREE(tok->buf);
-    tok->buf = tok->cur = tok->end = tok->inp = tok->start = NULL;
-    tok->done = E_DECODE;
-    return NULL;                /* as if it were EOF */
-}
-
-
-static const char *
-get_normal_name(const char *s)  /* for utf-8 and latin-1 */
-{
-    char buf[13];
-    int i;
-    for (i = 0; i < 12; i++) {
-        int c = s[i];
-        if (c == '\0')
-            break;
-        else if (c == '_')
-            buf[i] = '-';
-        else
-            buf[i] = tolower(c);
-    }
-    buf[i] = '\0';
-    if (strcmp(buf, "utf-8") == 0 ||
-        strncmp(buf, "utf-8-", 6) == 0)
-        return "utf-8";
-    else if (strcmp(buf, "latin-1") == 0 ||
-             strcmp(buf, "iso-8859-1") == 0 ||
-             strcmp(buf, "iso-latin-1") == 0 ||
-             strncmp(buf, "latin-1-", 8) == 0 ||
-             strncmp(buf, "iso-8859-1-", 11) == 0 ||
-             strncmp(buf, "iso-latin-1-", 12) == 0)
-        return "iso-8859-1";
-    else
-        return s;
-}
-
-/* Return the coding spec in S, or NULL if none is found.  */
-
-static int
-get_coding_spec(const char *s, char **spec, Py_ssize_t size, struct tok_state *tok)
-{
-    Py_ssize_t i;
-    *spec = NULL;
-    /* Coding spec must be in a comment, and that comment must be
-     * the only statement on the source code line. */
-    for (i = 0; i < size - 6; i++) {
-        if (s[i] == '#')
-            break;
-        if (s[i] != ' ' && s[i] != '\t' && s[i] != '\014')
-            return 1;
-    }
-    for (; i < size - 6; i++) { /* XXX inefficient search */
-        const char* t = s + i;
-        if (strncmp(t, "coding", 6) == 0) {
-            const char* begin = NULL;
-            t += 6;
-            if (t[0] != ':' && t[0] != '=')
-                continue;
-            do {
-                t++;
-            } while (t[0] == '\x20' || t[0] == '\t');
-
-            begin = t;
-            while (Py_ISALNUM(t[0]) ||
-                   t[0] == '-' || t[0] == '_' || t[0] == '.')
-                t++;
-
-            if (begin < t) {
-                char* r = new_string(begin, t - begin, tok);
-                const char* q;
-                if (!r)
-                    return 0;
-                q = get_normal_name(r);
-                if (r != q) {
-                    PyMem_FREE(r);
-                    r = new_string(q, strlen(q), tok);
-                    if (!r)
-                        return 0;
-                }
-                *spec = r;
-                break;
-            }
-        }
-    }
-    return 1;
-}
-
-/* Check whether the line contains a coding spec. If it does,
-   invoke the set_readline function for the new encoding.
-   This function receives the tok_state and the new encoding.
-   Return 1 on success, 0 on failure.  */
-
-static int
-check_coding_spec(const char* line, Py_ssize_t size, struct tok_state *tok,
-                  int set_readline(struct tok_state *, const char *))
-{
-    char *cs;
-    int r = 1;
-
-    if (tok->cont_line) {
-        /* It's a continuation line, so it can't be a coding spec. */
-        tok->read_coding_spec = 1;
-        return 1;
-    }
-    if (!get_coding_spec(line, &cs, size, tok))
-        return 0;
-    if (!cs) {
-        Py_ssize_t i;
-        for (i = 0; i < size; i++) {
-            if (line[i] == '#' || line[i] == '\n' || line[i] == '\r')
-                break;
-            if (line[i] != ' ' && line[i] != '\t' && line[i] != '\014') {
-                /* Stop checking coding spec after a line containing
-                 * anything except a comment. */
-                tok->read_coding_spec = 1;
-                break;
-            }
-        }
-        return 1;
-    }
-    tok->read_coding_spec = 1;
-    if (tok->encoding == NULL) {
-        assert(tok->decoding_state == STATE_RAW);
-        if (strcmp(cs, "utf-8") == 0) {
-            tok->encoding = cs;
-        } else {
-            r = set_readline(tok, cs);
-            if (r) {
-                tok->encoding = cs;
-                tok->decoding_state = STATE_NORMAL;
-            }
-            else {
-                PyErr_Format(PyExc_SyntaxError,
-                             "encoding problem: %s", cs);
-                PyMem_FREE(cs);
-            }
-        }
-    } else {                /* then, compare cs with BOM */
-        r = (strcmp(tok->encoding, cs) == 0);
-        if (!r)
-            PyErr_Format(PyExc_SyntaxError,
-                         "encoding problem: %s with BOM", cs);
-        PyMem_FREE(cs);
-    }
-    return r;
-}
-
-/* See whether the file starts with a BOM. If it does,
-   invoke the set_readline function with the new encoding.
-   Return 1 on success, 0 on failure.  */
-
-static int
-check_bom(int get_char(struct tok_state *),
-          void unget_char(int, struct tok_state *),
-          int set_readline(struct tok_state *, const char *),
-          struct tok_state *tok)
-{
-    int ch1, ch2, ch3;
-    ch1 = get_char(tok);
-    tok->decoding_state = STATE_RAW;
-    if (ch1 == EOF) {
-        return 1;
-    } else if (ch1 == 0xEF) {
-        ch2 = get_char(tok);
-        if (ch2 != 0xBB) {
-            unget_char(ch2, tok);
-            unget_char(ch1, tok);
-            return 1;
-        }
-        ch3 = get_char(tok);
-        if (ch3 != 0xBF) {
-            unget_char(ch3, tok);
-            unget_char(ch2, tok);
-            unget_char(ch1, tok);
-            return 1;
-        }
-#if 0
-    /* Disable support for UTF-16 BOMs until a decision
-       is made whether this needs to be supported.  */
-    } else if (ch1 == 0xFE) {
-        ch2 = get_char(tok);
-        if (ch2 != 0xFF) {
-            unget_char(ch2, tok);
-            unget_char(ch1, tok);
-            return 1;
-        }
-        if (!set_readline(tok, "utf-16-be"))
-            return 0;
-        tok->decoding_state = STATE_NORMAL;
-    } else if (ch1 == 0xFF) {
-        ch2 = get_char(tok);
-        if (ch2 != 0xFE) {
-            unget_char(ch2, tok);
-            unget_char(ch1, tok);
-            return 1;
-        }
-        if (!set_readline(tok, "utf-16-le"))
-            return 0;
-        tok->decoding_state = STATE_NORMAL;
-#endif
-    } else {
-        unget_char(ch1, tok);
-        return 1;
-    }
-    if (tok->encoding != NULL)
-        PyMem_FREE(tok->encoding);
-    tok->encoding = new_string("utf-8", 5, tok);
-    if (!tok->encoding)
-        return 0;
-    /* No need to set_readline: input is already utf-8 */
-    return 1;
-}
-
-/* Read a line of text from TOK into S, using the stream in TOK.
-   Return NULL on failure, else S.
-
-   On entry, tok->decoding_buffer will be one of:
-     1) NULL: need to call tok->decoding_readline to get a new line
-     2) PyUnicodeObject *: decoding_feof has called tok->decoding_readline and
-       stored the result in tok->decoding_buffer
-     3) PyByteArrayObject *: previous call to fp_readl did not have enough room
-       (in the s buffer) to copy entire contents of the line read
-       by tok->decoding_readline.  tok->decoding_buffer has the overflow.
-       In this case, fp_readl is called in a loop (with an expanded buffer)
-       until the buffer ends with a '\n' (or until the end of the file is
-       reached): see tok_nextc and its calls to decoding_fgets.
-*/
-
-static char *
-fp_readl(char *s, int size, struct tok_state *tok)
-{
-    PyObject* bufobj;
-    const char *buf;
-    Py_ssize_t buflen;
-
-    /* Ask for one less byte so we can terminate it */
-    assert(size > 0);
-    size--;
-
-    if (tok->decoding_buffer) {
-        bufobj = tok->decoding_buffer;
-        Py_INCREF(bufobj);
-    }
-    else
-    {
-        bufobj = _PyObject_CallNoArg(tok->decoding_readline);
-        if (bufobj == NULL)
-            goto error;
-    }
-    if (PyUnicode_CheckExact(bufobj))
-    {
-        buf = PyUnicode_AsUTF8AndSize(bufobj, &buflen);
-        if (buf == NULL) {
-            goto error;
-        }
-    }
-    else
-    {
-        buf = PyByteArray_AsString(bufobj);
-        if (buf == NULL) {
-            goto error;
-        }
-        buflen = PyByteArray_GET_SIZE(bufobj);
-    }
-
-    Py_XDECREF(tok->decoding_buffer);
-    if (buflen > size) {
-        /* Too many chars, the rest goes into tok->decoding_buffer */
-        tok->decoding_buffer = PyByteArray_FromStringAndSize(buf+size,
-                                                         buflen-size);
-        if (tok->decoding_buffer == NULL)
-            goto error;
-        buflen = size;
-    }
-    else
-        tok->decoding_buffer = NULL;
-
-    memcpy(s, buf, buflen);
-    s[buflen] = '\0';
-    if (buflen == 0) /* EOF */
-        s = NULL;
-    Py_DECREF(bufobj);
-    return s;
-
-error:
-    Py_XDECREF(bufobj);
-    return error_ret(tok);
-}
-
-/* Set the readline function for TOK to a StreamReader's
-   readline function. The StreamReader is named ENC.
-
-   This function is called from check_bom and check_coding_spec.
-
-   ENC is usually identical to the future value of tok->encoding,
-   except for the (currently unsupported) case of UTF-16.
-
-   Return 1 on success, 0 on failure. */
-
-static int
-fp_setreadl(struct tok_state *tok, const char* enc)
-{
-    PyObject *readline, *io, *stream;
-    _Py_IDENTIFIER(open);
-    _Py_IDENTIFIER(readline);
-    int fd;
-    long pos;
-
-    fd = fileno(tok->fp);
-    /* Due to buffering the file offset for fd can be different from the file
-     * position of tok->fp.  If tok->fp was opened in text mode on Windows,
-     * its file position counts CRLF as one char and can't be directly mapped
-     * to the file offset for fd.  Instead we step back one byte and read to
-     * the end of line.*/
-    pos = ftell(tok->fp);
-    if (pos == -1 ||
-        lseek(fd, (off_t)(pos > 0 ? pos - 1 : pos), SEEK_SET) == (off_t)-1) {
-        PyErr_SetFromErrnoWithFilename(PyExc_OSError, NULL);
-        return 0;
-    }
-
-    io = PyImport_ImportModuleNoBlock("io");
-    if (io == NULL)
-        return 0;
-
-    stream = _PyObject_CallMethodId(io, &PyId_open, "isisOOO",
-                    fd, "r", -1, enc, Py_None, Py_None, Py_False);
-    Py_DECREF(io);
-    if (stream == NULL)
-        return 0;
-
-    readline = _PyObject_GetAttrId(stream, &PyId_readline);
-    Py_DECREF(stream);
-    if (readline == NULL)
-        return 0;
-    Py_XSETREF(tok->decoding_readline, readline);
-
-    if (pos > 0) {
-        PyObject *bufobj = _PyObject_CallNoArg(readline);
-        if (bufobj == NULL)
-            return 0;
-        Py_DECREF(bufobj);
-    }
-
-    return 1;
-}
-
-/* Fetch the next byte from TOK. */
-
-static int fp_getc(struct tok_state *tok) {
-    return getc(tok->fp);
-}
-
-/* Unfetch the last byte back into TOK.  */
-
-static void fp_ungetc(int c, struct tok_state *tok) {
-    ungetc(c, tok->fp);
-}
-
-/* Check whether the characters at s start a valid
-   UTF-8 sequence. Return the number of characters forming
-   the sequence if yes, 0 if not.  */
-static int valid_utf8(const unsigned char* s)
-{
-    int expected = 0;
-    int length;
-    if (*s < 0x80)
-        /* single-byte code */
-        return 1;
-    if (*s < 0xc0)
-        /* following byte */
-        return 0;
-    if (*s < 0xE0)
-        expected = 1;
-    else if (*s < 0xF0)
-        expected = 2;
-    else if (*s < 0xF8)
-        expected = 3;
-    else
-        return 0;
-    length = expected + 1;
-    for (; expected; expected--)
-        if (s[expected] < 0x80 || s[expected] >= 0xC0)
-            return 0;
-    return length;
-}
-
-/* Read a line of input from TOK. Determine encoding
-   if necessary.  */
-
-static char *
-decoding_fgets(char *s, int size, struct tok_state *tok)
-{
-    char *line = NULL;
-    int badchar = 0;
-    for (;;) {
-        if (tok->decoding_state == STATE_NORMAL) {
-            /* We already have a codec associated with
-               this input. */
-            line = fp_readl(s, size, tok);
-            break;
-        } else if (tok->decoding_state == STATE_RAW) {
-            /* We want a 'raw' read. */
-            line = Py_UniversalNewlineFgets(s, size,
-                                            tok->fp, NULL);
-            break;
-        } else {
-            /* We have not yet determined the encoding.
-               If an encoding is found, use the file-pointer
-               reader functions from now on. */
-            if (!check_bom(fp_getc, fp_ungetc, fp_setreadl, tok))
-                return error_ret(tok);
-            assert(tok->decoding_state != STATE_INIT);
-        }
-    }
-    if (line != NULL && tok->lineno < 2 && !tok->read_coding_spec) {
-        if (!check_coding_spec(line, strlen(line), tok, fp_setreadl)) {
-            return error_ret(tok);
-        }
-    }
-#ifndef PGEN
-    /* The default encoding is UTF-8, so make sure we don't have any
-       non-UTF-8 sequences in it. */
-    if (line && !tok->encoding) {
-        unsigned char *c;
-        int length;
-        for (c = (unsigned char *)line; *c; c += length)
-            if (!(length = valid_utf8(c))) {
-                badchar = *c;
-                break;
-            }
-    }
-    if (badchar) {
-        /* Need to add 1 to the line number, since this line
-           has not been counted, yet.  */
-        PyErr_Format(PyExc_SyntaxError,
-                "Non-UTF-8 code starting with '\\x%.2x' "
-                "in file %U on line %i, "
-                "but no encoding declared; "
-                "see http://python.org/dev/peps/pep-0263/ for details",
-                badchar, tok->filename, tok->lineno + 1);
-        return error_ret(tok);
-    }
-#endif
-    return line;
-}
-
-static int
-decoding_feof(struct tok_state *tok)
-{
-    if (tok->decoding_state != STATE_NORMAL) {
-        return feof(tok->fp);
-    } else {
-        PyObject* buf = tok->decoding_buffer;
-        if (buf == NULL) {
-            buf = _PyObject_CallNoArg(tok->decoding_readline);
-            if (buf == NULL) {
-                error_ret(tok);
-                return 1;
-            } else {
-                tok->decoding_buffer = buf;
-            }
-        }
-        return PyObject_Length(buf) == 0;
-    }
-}
-
-/* Fetch a byte from TOK, using the string buffer. */
-
-static int
-buf_getc(struct tok_state *tok) {
-    return Py_CHARMASK(*tok->str++);
-}
-
-/* Unfetch a byte from TOK, using the string buffer. */
-
-static void
-buf_ungetc(int c, struct tok_state *tok) {
-    tok->str--;
-    assert(Py_CHARMASK(*tok->str) == c);        /* tok->cur may point to read-only segment */
-}
-
-/* Set the readline function for TOK to ENC. For the string-based
-   tokenizer, this means to just record the encoding. */
-
-static int
-buf_setreadl(struct tok_state *tok, const char* enc) {
-    tok->enc = enc;
-    return 1;
-}
-
-/* Return a UTF-8 encoding Python string object from the
-   C byte string STR, which is encoded with ENC. */
-
-static PyObject *
-translate_into_utf8(const char* str, const char* enc) {
-    PyObject *utf8;
-    PyObject* buf = PyUnicode_Decode(str, strlen(str), enc, NULL);
-    if (buf == NULL)
-        return NULL;
-    utf8 = PyUnicode_AsUTF8String(buf);
-    Py_DECREF(buf);
-    return utf8;
-}
-
-
-static char *
-translate_newlines(const char *s, int exec_input, struct tok_state *tok) {
-    int skip_next_lf = 0;
-    size_t needed_length = strlen(s) + 2, final_length;
-    char *buf, *current;
-    char c = '\0';
-    buf = PyMem_MALLOC(needed_length);
-    if (buf == NULL) {
-        tok->done = E_NOMEM;
-        return NULL;
-    }
-    for (current = buf; *s; s++, current++) {
-        c = *s;
-        if (skip_next_lf) {
-            skip_next_lf = 0;
-            if (c == '\n') {
-                c = *++s;
-                if (!c)
-                    break;
-            }
-        }
-        if (c == '\r') {
-            skip_next_lf = 1;
-            c = '\n';
-        }
-        *current = c;
-    }
-    /* If this is exec input, add a newline to the end of the string if
-       there isn't one already. */
-    if (exec_input && c != '\n') {
-        *current = '\n';
-        current++;
-    }
-    *current = '\0';
-    final_length = current - buf + 1;
-    if (final_length < needed_length && final_length)
-        /* should never fail */
-        buf = PyMem_REALLOC(buf, final_length);
-    return buf;
-}
-
-/* Decode a byte string STR for use as the buffer of TOK.
-   Look for encoding declarations inside STR, and record them
-   inside TOK.  */
-
-static const char *
-decode_str(const char *input, int single, struct tok_state *tok)
-{
-    PyObject* utf8 = NULL;
-    const char *str;
-    const char *s;
-    const char *newl[2] = {NULL, NULL};
-    int lineno = 0;
-    tok->input = str = translate_newlines(input, single, tok);
-    if (str == NULL)
-        return NULL;
-    tok->enc = NULL;
-    tok->str = str;
-    if (!check_bom(buf_getc, buf_ungetc, buf_setreadl, tok))
-        return error_ret(tok);
-    str = tok->str;             /* string after BOM if any */
-    assert(str);
-    if (tok->enc != NULL) {
-        utf8 = translate_into_utf8(str, tok->enc);
-        if (utf8 == NULL)
-            return error_ret(tok);
-        str = PyBytes_AsString(utf8);
-    }
-    for (s = str;; s++) {
-        if (*s == '\0') break;
-        else if (*s == '\n') {
-            assert(lineno < 2);
-            newl[lineno] = s;
-            lineno++;
-            if (lineno == 2) break;
-        }
-    }
-    tok->enc = NULL;
-    /* need to check line 1 and 2 separately since check_coding_spec
-       assumes a single line as input */
-    if (newl[0]) {
-        if (!check_coding_spec(str, newl[0] - str, tok, buf_setreadl))
-            return error_ret(tok);
-        if (tok->enc == NULL && !tok->read_coding_spec && newl[1]) {
-            if (!check_coding_spec(newl[0]+1, newl[1] - newl[0],
-                                   tok, buf_setreadl))
-                return error_ret(tok);
-        }
-    }
-    if (tok->enc != NULL) {
-        assert(utf8 == NULL);
-        utf8 = translate_into_utf8(str, tok->enc);
-        if (utf8 == NULL)
-            return error_ret(tok);
-        str = PyBytes_AS_STRING(utf8);
-    }
-    assert(tok->decoding_buffer == NULL);
-    tok->decoding_buffer = utf8; /* CAUTION */
-    return str;
-}
-
-#endif /* PGEN */
 
 /* Set up tokenizer for string */
 
@@ -826,9 +195,6 @@ PyTokenizer_FromUTF8(const char *str, int exec_input)
     struct tok_state *tok = tok_new();
     if (tok == NULL)
         return NULL;
-#ifndef PGEN
-    tok->input = str = translate_newlines(str, exec_input, tok);
-#endif
     if (str == NULL) {
         PyTokenizer_Free(tok);
         return NULL;
@@ -889,11 +255,6 @@ PyTokenizer_Free(struct tok_state *tok)
 {
     if (tok->encoding != NULL)
         PyMem_FREE(tok->encoding);
-#ifndef PGEN
-    Py_XDECREF(tok->decoding_readline);
-    Py_XDECREF(tok->decoding_buffer);
-    Py_XDECREF(tok->filename);
-#endif
     if (tok->fp != NULL && tok->buf != NULL)
         PyMem_FREE(tok->buf);
     if (tok->input)
@@ -932,31 +293,6 @@ tok_nextc(struct tok_state *tok)
         }
         if (tok->prompt != NULL) {
             char *newtok = PyOS_Readline(stdin, stdout, tok->prompt);
-#ifndef PGEN
-            if (newtok != NULL) {
-                char *translated = translate_newlines(newtok, 0, tok);
-                PyMem_FREE(newtok);
-                if (translated == NULL)
-                    return EOF;
-                newtok = translated;
-            }
-            if (tok->encoding && newtok && *newtok) {
-                /* Recode to UTF-8 */
-                Py_ssize_t buflen;
-                const char* buf;
-                PyObject *u = translate_into_utf8(newtok, tok->encoding);
-                PyMem_FREE(newtok);
-                if (!u) {
-                    tok->done = E_DECODE;
-                    return EOF;
-                }
-                buflen = PyBytes_GET_SIZE(u);
-                buf = PyBytes_AS_STRING(u);
-                newtok = PyMem_MALLOC(buflen+1);
-                strcpy(newtok, buf);
-                Py_DECREF(u);
-            }
-#endif
             if (tok->nextprompt != NULL)
                 tok->prompt = tok->nextprompt;
             if (newtok == NULL)
@@ -1283,22 +619,7 @@ PyToken_ThreeChars(int c1, int c2, int c3)
 static int
 syntaxerror(struct tok_state *tok, const char *format, ...)
 {
-#ifndef PGEN
-    va_list vargs;
-#ifdef HAVE_STDARG_PROTOTYPES
-    va_start(vargs, format);
-#else
-    va_start(vargs);
-#endif
-    PyErr_FormatV(PyExc_SyntaxError, format, vargs);
-    va_end(vargs);
-    PyErr_SyntaxLocationObject(tok->filename,
-                               tok->lineno,
-                               (int)(tok->cur - tok->line_start));
-    tok->done = E_ERROR;
-#else
     tok->done = E_TOKEN;
-#endif
     return ERRORTOKEN;
 }
 
@@ -1310,36 +631,7 @@ indenterror(struct tok_state *tok)
     return ERRORTOKEN;
 }
 
-#ifdef PGEN
 #define verify_identifier(tok) 1
-#else
-/* Verify that the identifier follows PEP 3131.
-   All identifier strings are guaranteed to be "ready" unicode objects.
- */
-static int
-verify_identifier(struct tok_state *tok)
-{
-    PyObject *s;
-    int result;
-    if (tok->decoding_erred)
-        return 0;
-    s = PyUnicode_DecodeUTF8(tok->start, tok->cur - tok->start, NULL);
-    if (s == NULL) {
-        if (PyErr_ExceptionMatches(PyExc_UnicodeDecodeError)) {
-            PyErr_Clear();
-            tok->done = E_IDENTIFIER;
-        } else {
-            tok->done = E_ERROR;
-        }
-        return 0;
-    }
-    result = PyUnicode_IsIdentifier(s);
-    Py_DECREF(s);
-    if (result == 0)
-        tok->done = E_IDENTIFIER;
-    return result;
-}
-#endif
 
 static int
 tok_decimal_tail(struct tok_state *tok)
@@ -1880,11 +1172,7 @@ PyTokenizer_FindEncodingFilename(int fd, PyObject *filename)
     FILE *fp;
     char *p_start =NULL , *p_end =NULL , *encoding = NULL;
 
-#ifndef PGEN
-    fd = _Py_dup(fd);
-#else
     fd = dup(fd);
-#endif
     if (fd < 0) {
         return NULL;
     }
@@ -1898,20 +1186,6 @@ PyTokenizer_FindEncodingFilename(int fd, PyObject *filename)
         fclose(fp);
         return NULL;
     }
-#ifndef PGEN
-    if (filename != NULL) {
-        Py_INCREF(filename);
-        tok->filename = filename;
-    }
-    else {
-        tok->filename = PyUnicode_FromString("<string>");
-        if (tok->filename == NULL) {
-            fclose(fp);
-            PyTokenizer_Free(tok);
-            return encoding;
-        }
-    }
-#endif
     while (tok->lineno < 2 && tok->done == E_OK) {
         PyTokenizer_Get(tok, &p_start, &p_end);
     }
@@ -1930,15 +1204,3 @@ PyTokenizer_FindEncoding(int fd)
 {
     return PyTokenizer_FindEncodingFilename(fd, NULL);
 }
-
-#ifdef Py_DEBUG
-
-void
-tok_dump(int type, char *start, char *end)
-{
-    printf("%s", _PyParser_TokenNames[type]);
-    if (type == NAME || type == NUMBER || type == STRING || type == OP)
-        printf("(%.*s)", (int)(end - start), start);
-}
-
-#endif

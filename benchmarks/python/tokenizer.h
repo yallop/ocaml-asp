@@ -40,13 +40,6 @@ struct tok_state {
     int level;          /* () [] {} Parentheses nesting level */
             /* Used to allow free continuations inside them */
     /* Stuff for checking on different tab sizes */
-#ifndef PGEN
-    /* pgen doesn't have access to Python codecs, it cannot decode the input
-       filename. The bytes filename might be kept, but it is only used by
-       indenterror() and it is not really needed: pgen only compiles one file
-       (Grammar/Grammar). */
-    PyObject *filename;
-#endif
     int altindstack[MAXINDENT];         /* Stack of alternate indents */
     /* Stuff for PEP 0263 */
     enum decoding_state decoding_state;
@@ -55,10 +48,6 @@ struct tok_state {
     char *encoding;         /* Source encoding. */
     int cont_line;          /* whether we are in a continuation line. */
     const char* line_start;     /* pointer to start of current line */
-#ifndef PGEN
-    PyObject *decoding_readline; /* open(...).readline */
-    PyObject *decoding_buffer;
-#endif
     const char* enc;        /* Encoding for the current str. */
     const char* str;
     const char* input; /* Tokenizer's newline translated copy of the string. */
