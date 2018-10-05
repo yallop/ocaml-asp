@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <string.h>
 
 #include <caml/mlvalues.h>
 #include <caml/memory.h>
@@ -46,66 +47,77 @@ value tokenizer_from_utf8(value s)
   CAMLreturn(v);
 }
 
-value tokenizer_get(value s)
+static value string_of_start_and_end(const char *start, const char *end)
 {
-  CAMLparam1(s);
+  value v = caml_alloc_string(end - start);
+  memcpy(String_val(v), start, end - start);
+  return v;
+}
+
+value tokenizer_get(value s, value sref)
+{
+  CAMLparam2(s, sref);
   struct tok_state *state = tok_state_custom_val(s);
   char *start = NULL, *end = NULL;
   switch (PyTokenizer_Get(state, &start, &end)) {
-  case ENDMARKER        : puts("ENDMARKER"); CAMLreturn(Val_unit);
-  case NAME             : puts("NAME"); CAMLreturn(Val_unit);
-  case NUMBER           : puts("NUMBER"); CAMLreturn(Val_unit);
-  case STRING           : puts("STRING"); CAMLreturn(Val_unit);
-  case NEWLINE          : puts("NEWLINE"); CAMLreturn(Val_unit);
-  case INDENT           : puts("INDENT"); CAMLreturn(Val_unit);
-  case DEDENT           : puts("DEDENT"); CAMLreturn(Val_unit);
-  case LPAR             : puts("LPAR"); CAMLreturn(Val_unit);
-  case RPAR             : puts("RPAR"); CAMLreturn(Val_unit);
-  case LSQB             : puts("LSQB"); CAMLreturn(Val_unit);
-  case RSQB             : puts("RSQB"); CAMLreturn(Val_unit);
-  case COLON            : puts("COLON"); CAMLreturn(Val_unit);
-  case COMMA            : puts("COMMA"); CAMLreturn(Val_unit);
-  case SEMI             : puts("SEMI"); CAMLreturn(Val_unit);
-  case PLUS             : puts("PLUS"); CAMLreturn(Val_unit);
-  case MINUS            : puts("MINUS"); CAMLreturn(Val_unit);
-  case STAR             : puts("STAR"); CAMLreturn(Val_unit);
-  case SLASH            : puts("SLASH"); CAMLreturn(Val_unit);
-  case VBAR             : puts("VBAR"); CAMLreturn(Val_unit);
-  case AMPER            : puts("AMPER"); CAMLreturn(Val_unit);
-  case LESS             : puts("LESS"); CAMLreturn(Val_unit);
-  case GREATER          : puts("GREATER"); CAMLreturn(Val_unit);
-  case EQUAL            : puts("EQUAL"); CAMLreturn(Val_unit);
-  case DOT              : puts("DOT"); CAMLreturn(Val_unit);
-  case PERCENT          : puts("PERCENT"); CAMLreturn(Val_unit);
-  case LBRACE           : puts("LBRACE"); CAMLreturn(Val_unit);
-  case RBRACE           : puts("RBRACE"); CAMLreturn(Val_unit);
-  case EQEQUAL          : puts("EQEQUAL"); CAMLreturn(Val_unit);
-  case NOTEQUAL         : puts("NOTEQUAL"); CAMLreturn(Val_unit);
-  case LESSEQUAL        : puts("LESSEQUAL"); CAMLreturn(Val_unit);
-  case GREATEREQUAL     : puts("GREATEREQUAL"); CAMLreturn(Val_unit);
-  case TILDE            : puts("TILDE"); CAMLreturn(Val_unit);
-  case CIRCUMFLEX       : puts("CIRCUMFLEX"); CAMLreturn(Val_unit);
-  case LEFTSHIFT        : puts("LEFTSHIFT"); CAMLreturn(Val_unit);
-  case RIGHTSHIFT       : puts("RIGHTSHIFT"); CAMLreturn(Val_unit);
-  case DOUBLESTAR       : puts("DOUBLESTAR"); CAMLreturn(Val_unit);
-  case PLUSEQUAL        : puts("PLUSEQUAL"); CAMLreturn(Val_unit);
-  case MINEQUAL         : puts("MINEQUAL"); CAMLreturn(Val_unit);
-  case STAREQUAL        : puts("STAREQUAL"); CAMLreturn(Val_unit);
-  case SLASHEQUAL       : puts("SLASHEQUAL"); CAMLreturn(Val_unit);
-  case PERCENTEQUAL     : puts("PERCENTEQUAL"); CAMLreturn(Val_unit);
-  case AMPEREQUAL       : puts("AMPEREQUAL"); CAMLreturn(Val_unit);
-  case VBAREQUAL        : puts("VBAREQUAL"); CAMLreturn(Val_unit);
-  case CIRCUMFLEXEQUAL  : puts("CIRCUMFLEXEQUAL"); CAMLreturn(Val_unit);
-  case LEFTSHIFTEQUAL   : puts("LEFTSHIFTEQUAL"); CAMLreturn(Val_unit);
-  case RIGHTSHIFTEQUAL  : puts("RIGHTSHIFTEQUAL"); CAMLreturn(Val_unit);
-  case DOUBLESTAREQUAL  : puts("DOUBLESTAREQUAL"); CAMLreturn(Val_unit);
-  case DOUBLESLASH      : puts("DOUBLESLASH"); CAMLreturn(Val_unit);
-  case DOUBLESLASHEQUAL : puts("DOUBLESLASHEQUAL"); CAMLreturn(Val_unit);
-  case AT               : puts("AT"); CAMLreturn(Val_unit);
-  case ATEQUAL          : puts("ATEQUAL"); CAMLreturn(Val_unit);
-  case RARROW           : puts("RARROW"); CAMLreturn(Val_unit);
-  case ELLIPSIS         : puts("ELLIPSIS"); CAMLreturn(Val_unit);
-  case OP               : puts("OP"); CAMLreturn(Val_unit);
+  case ENDMARKER        : CAMLreturn(Val_int(ENDMARKER));
+  case NAME             : Field(sref, 0) = string_of_start_and_end(start, end);
+                          CAMLreturn(Val_int(NAME));
+  case NUMBER           : Field(sref, 0) = string_of_start_and_end(start, end);
+                          CAMLreturn(Val_int(NUMBER));
+  case STRING           : Field(sref, 0) = string_of_start_and_end(start, end);
+                          CAMLreturn(Val_int(STRING));
+  case NEWLINE          : CAMLreturn(Val_int(NEWLINE));
+  case INDENT           : CAMLreturn(Val_int(INDENT));
+  case DEDENT           : CAMLreturn(Val_int(DEDENT));
+  case LPAR             : CAMLreturn(Val_int(LPAR));
+  case RPAR             : CAMLreturn(Val_int(RPAR));
+  case LSQB             : CAMLreturn(Val_int(LSQB));
+  case RSQB             : CAMLreturn(Val_int(RSQB));
+  case COLON            : CAMLreturn(Val_int(COLON));
+  case COMMA            : CAMLreturn(Val_int(COMMA));
+  case SEMI             : CAMLreturn(Val_int(SEMI));
+  case PLUS             : CAMLreturn(Val_int(PLUS));
+  case MINUS            : CAMLreturn(Val_int(MINUS));
+  case STAR             : CAMLreturn(Val_int(STAR));
+  case SLASH            : CAMLreturn(Val_int(SLASH));
+  case VBAR             : CAMLreturn(Val_int(VBAR));
+  case AMPER            : CAMLreturn(Val_int(AMPER));
+  case LESS             : CAMLreturn(Val_int(LESS));
+  case GREATER          : CAMLreturn(Val_int(GREATER));
+  case EQUAL            : CAMLreturn(Val_int(EQUAL));
+  case DOT              : CAMLreturn(Val_int(DOT));
+  case PERCENT          : CAMLreturn(Val_int(PERCENT));
+  case LBRACE           : CAMLreturn(Val_int(LBRACE));
+  case RBRACE           : CAMLreturn(Val_int(RBRACE));
+  case EQEQUAL          : CAMLreturn(Val_int(EQEQUAL));
+  case NOTEQUAL         : CAMLreturn(Val_int(NOTEQUAL));
+  case LESSEQUAL        : CAMLreturn(Val_int(LESSEQUAL));
+  case GREATEREQUAL     : CAMLreturn(Val_int(GREATEREQUAL));
+  case TILDE            : CAMLreturn(Val_int(TILDE));
+  case CIRCUMFLEX       : CAMLreturn(Val_int(CIRCUMFLEX));
+  case LEFTSHIFT        : CAMLreturn(Val_int(LEFTSHIFT));
+  case RIGHTSHIFT       : CAMLreturn(Val_int(RIGHTSHIFT));
+  case DOUBLESTAR       : CAMLreturn(Val_int(DOUBLESTAR));
+  case PLUSEQUAL        : CAMLreturn(Val_int(PLUSEQUAL));
+  case MINEQUAL         : CAMLreturn(Val_int(MINEQUAL));
+  case STAREQUAL        : CAMLreturn(Val_int(STAREQUAL));
+  case SLASHEQUAL       : CAMLreturn(Val_int(SLASHEQUAL));
+  case PERCENTEQUAL     : CAMLreturn(Val_int(PERCENTEQUAL));
+  case AMPEREQUAL       : CAMLreturn(Val_int(AMPEREQUAL));
+  case VBAREQUAL        : CAMLreturn(Val_int(VBAREQUAL));
+  case CIRCUMFLEXEQUAL  : CAMLreturn(Val_int(CIRCUMFLEXEQUAL));
+  case LEFTSHIFTEQUAL   : CAMLreturn(Val_int(LEFTSHIFTEQUAL));
+  case RIGHTSHIFTEQUAL  : CAMLreturn(Val_int(RIGHTSHIFTEQUAL));
+  case DOUBLESTAREQUAL  : CAMLreturn(Val_int(DOUBLESTAREQUAL));
+  case DOUBLESLASH      : CAMLreturn(Val_int(DOUBLESLASH));
+  case DOUBLESLASHEQUAL : CAMLreturn(Val_int(DOUBLESLASHEQUAL));
+  case AT               : CAMLreturn(Val_int(AT));
+  case ATEQUAL          : CAMLreturn(Val_int(ATEQUAL));
+  case RARROW           : CAMLreturn(Val_int(RARROW));
+  case ELLIPSIS         : CAMLreturn(Val_int(ELLIPSIS));
+  case OP               : Field(sref, 0) = string_of_start_and_end(start, end);
+                          CAMLreturn(Val_int(OP));
   case ERRORTOKEN       : caml_failwith("Tokenizing error");
   default               : caml_failwith("Tokenizer: internal error");
   }
