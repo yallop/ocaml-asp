@@ -24,7 +24,7 @@ struct
     in loop 0 bot
 
   let complement_string s' = (* assumes characters in s' are distinct *)
-    let s = String.make (256 - String.length s') '\000' in
+    let s = Bytes.make (256 - String.length s') '\000' in
     let j = ref 0 in
     for i = 0 to 255 do
       let c = Char.chr i in
@@ -33,7 +33,7 @@ struct
           incr j
         end
     done;
-    s
+    Bytes.unsafe_to_string s
 
   let complement s = charset (complement_string s)
 

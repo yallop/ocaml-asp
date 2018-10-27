@@ -24,7 +24,7 @@ module Parse (Token : Asp.Types.TOKEN) = struct
       let b = Buffer.create 0 in
       let fmt = Format.formatter_of_buffer b in
       print fmt t;
-      Format.pp_flush_formatter fmt;
+      Format.pp_print_flush fmt ();
       Buffer.contents b
 
     let show fmt = Format.sprintf fmt

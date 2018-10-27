@@ -22,4 +22,4 @@ depends: [
    "ounit"           {test}
    "conf-python-2-7" {test}
 ]
-available: [ compiler = "4.04.0+BER" ]
+available: [ compiler = "4.07.1+BER" | compiler = "4.04.0+BER" ]

@@ -30,7 +30,7 @@ struct
        List.fold_left (fun p (l,h) -> pattern @@ Ppat_or (interval l h, p))
          (interval l h) is
 
-  let case : 'a. pattern -> 'a code -> (char -> 'a) Print_code.pat_code =
+  let case : 'a. pattern -> 'a code -> (char -> 'a) pat_code =
     fun pat code ->
     let fv, rhs = Obj.magic code in
     (Obj.magic (fv, expression (Pexp_fun (Asttypes.Nolabel, None, pat, rhs))))
@@ -54,6 +54,6 @@ let ifmem : 'a. char code -> (Set.Make(Char).t * 'a code) list -> otherwise:'a c
    *                    s3) cases CharSet.empty in
    * (\* check coverage *\)
    * assert (CharSet.cardinal all_sets = 255); *)
- Print_code.make_match c
+ make_match c
  @@ (List.map (fun (lhs, rhs) -> Mk.case (ipat lhs) rhs) cases
      @ [.< fun _ -> .~otherwise >. [@metaocaml.functionliteral] ])
