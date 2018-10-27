@@ -10,12 +10,12 @@ struct
   let toString cs =
     (* TODO: make this faster *)
     let n = List.length cs in
-    let s = String.make n '\000' in
+    let s = Bytes.make n '\000' in
     let rec loop i = function
       | [] -> s
       | c :: cs -> Bytes.unsafe_set s i c; loop (i+1) cs
       in
-      loop 0 cs
+      Bytes.unsafe_to_string (loop 0 cs)
 
   let toInt : char list -> int =
     let rec loop l acc = match l with

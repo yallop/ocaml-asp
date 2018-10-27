@@ -6,4 +6,5 @@ true: short_paths, annot, bin_annot, warn(+3+5+8..12+18..20+26..39-40+47+49+60)
 
 <benchmarks/*/*.*>: thread, package(core_bench letrec), use_asp
 <lib/*.*>: package(letrec), no_alias_deps
+<lib/asp_char_patmatch.*>: open_print_code
 <lib_test/*.*>: package(letrec oUnit), use_asp
