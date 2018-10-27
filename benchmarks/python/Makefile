@@ -1,4 +1,4 @@
-MLS=$(wildcard *.ml)
+MLS= python_tokens_base.ml fixes.ml python_unstaged_combinator_parser.ml pytok.ml python_tokens.ml python_benchmark.ml python_staged_combinator_parser.ml
 
 all: stuff.cma
 
@@ -13,4 +13,4 @@ tokenizer_stubs.o: tokenizer_stubs.c tokenizer.h token.h errcode.h
 	ocamlfind -toolchain metaocaml ocamlc -c -g  tokenizer_stubs.c
 
 clean:
-	rm -f *.cmi *.cmo *.cmx *.cma *.cmxa *.o *.so *.a
+	rm -f *.cmi *.cmo *.cmx *.cma *.cmxa *.o *.so *.a a.out

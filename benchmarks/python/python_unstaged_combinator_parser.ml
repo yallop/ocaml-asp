@@ -2,6 +2,7 @@ module P1 = Asp.Unstaged.Parse(Asp.Utilities.Unstaged.Char_tag)
 module P2 = Asp.Unstaged.Parse(Python_tokens_base.Tag)
 
 module Tok = Python_tokens_base
+module F = Fixes
 
 module Parser =
 struct
@@ -58,26 +59,7 @@ struct
       <+> tok Tok.KW_is
       <+> (tok Tok.KW_is >>> tok Tok.KW_not)
 
-  let fix2 (type a b)
-        (f : a P2.t -> b P2.t -> a P2.t)
-        (g : a P2.t -> b P2.t -> b P2.t) : b P2.t =
-    fix @@ fun b ->
-    let a' = fix @@ fun a -> f a b in
-    g a' b
-                      
-  let fix3 (type a b c)
-        (f : a P2.t -> b P2.t -> c P2.t -> a P2.t)
-        (g : a P2.t -> b P2.t -> c P2.t -> b P2.t)
-        (h : a P2.t -> b P2.t -> c P2.t -> c P2.t)
-      : c P2.t =
-    fix @@ fun c ->
-    let b' = fix @@ fun b ->
-                    let a' = (fix @@ fun a -> f a b c) in
-             g a' b c
-    in
-    let a'' = fix @@ fun a -> f a b' c
-    in
-    h a'' b' c
+
 
   (*
   # Grammar for Python

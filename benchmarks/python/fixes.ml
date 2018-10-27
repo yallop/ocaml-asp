@@ -41,7 +41,6 @@ module CProd2 : PROD2 = struct
 end
 
 
-
 let fix3 (type a b c)
       (f : a P2.t * b P2.t * c P2.t -> a P2.t)
       (g : a P2.t * b P2.t * c P2.t -> b P2.t)
@@ -55,6 +54,59 @@ let fix3 (type a b c)
   let a'' = fix @@ fun a -> f (a, b', c)
   in
   h (a'', b', c)
+
+type (_,_) eql = Refl : ('a, 'a) eql
+module type INDEX =
+sig
+  type _ t
+  val equalp : 'a t -> 'b t -> ('a, 'b) eql option
+end
+
+module Fix(Index: INDEX) =
+struct
+  type entry = Entry : 'a Index.t * 'a P2.t -> entry
+  type resolve = { resolve : 'a. 'a Index.t -> 'a P2.t;
+                   mutable cache : entry list }
+
+  let push i v r = r.cache <- Entry (i, v) :: r.cache
+
+  let (!!) (type a) r (index : a Index.t) =
+    let rec lookup = function
+      | [] -> let v = r.resolve index in
+              push index v r;
+              v
+      | Entry (index', v) :: entries ->
+         match Index.equalp index index' with
+         | None -> lookup entries
+         | Some Refl -> v
+    in lookup r.cache
+
+  type r = { r : 'a. resolve -> 'a Index.t -> 'a P2.t }
+
+  let fixn (r : r) index =
+    let rec r' = { cache = []; resolve = fun i -> r.r r' i } in
+    fix @@ fun x -> push index x r'; r'.resolve index
+end
+
+let fix2 (type a b)
+      (f : a P2.t * b P2.t -> a P2.t)
+      (g : a P2.t * b P2.t -> b P2.t) : b P2.t =
+  let module I2 = struct
+      type _ t = Fst : a t | Snd : b t
+      let equalp : type a b. a t -> b t -> (a, b) eql option =
+        fun x y -> match x, y with
+                   | Fst, Fst -> Some Refl
+                   | Snd, Snd -> Some Refl
+                   | _ -> None
+    end in
+  let module F2 = Fix(I2) in
+  let r : type a. F2.resolve -> a I2.t -> a P2.t =
+    fun rr i ->
+    let (!!) = F2.((!!)) in
+    match i with
+    | I2.Fst -> f (rr !! I2.Fst, rr !! I2.Snd)
+    | I2.Snd -> g (rr !! I2.Fst, rr !! I2.Snd)
+  in F2.fixn {F2.r} I2.Snd 
 
 (*
 type (_,_) eql = Refl : ('a, 'a) eql
