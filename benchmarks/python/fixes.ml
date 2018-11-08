@@ -101,11 +101,9 @@ let fix2 (type a b)
     end in
   let module F2 = Fix(I2) in
   let r : type a. F2.resolve -> a I2.t -> a P2.t =
-    fun rr i ->
-    let (!!) = F2.((!!)) in
-    match i with
-    | I2.Fst -> f (rr !! I2.Fst, rr !! I2.Snd)
-    | I2.Snd -> g (rr !! I2.Fst, rr !! I2.Snd)
+    fun rr -> function
+    | I2.Fst -> f (rr.resolve I2.Fst, rr.resolve I2.Snd)
+    | I2.Snd -> g (rr.resolve I2.Fst, rr.resolve I2.Snd)
   in F2.fixn {F2.r} I2.Snd 
 
 (*
