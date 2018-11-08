@@ -17,6 +17,7 @@ let files = ListLabels.map filenames
 let unstaged_python n =
   let fs = List.assoc n files in
   Core.Staged.stage @@ fun () ->
+  let module P = Python_unstaged_combinator_parser in
   ListLabels.iter fs
     ~f:(fun _ -> assert false )
 

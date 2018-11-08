@@ -60,6 +60,17 @@ struct
       <+> (tok Tok.KW_is >>> tok Tok.KW_not)
 
 
+  module Python_index =
+  struct
+    open Fixes
+
+    type _ t =
+      Stmt : unit t
+    let equalp : type a b. a t -> b t -> (a, b) eql option =
+      fun Stmt Stmt -> Some Refl
+  end
+
+  module Python_fix = Fixes.Fix(Python_index)
 
   (*
   # Grammar for Python
