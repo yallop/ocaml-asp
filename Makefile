@@ -1,6 +1,6 @@
 OCAMLBUILD=ocamlbuild -use-ocamlfind -ocamlc '-toolchain metaocaml ocamlc' \
                                      -ocamlopt '-toolchain metaocaml ocamlopt' \
-                                     -ocamldep 'ocamldep -as-map'
+                                     -ocamldep '-toolchain metaocaml ocamldep -as-map'
 
 #BENCHMARKS=intexp pgn ppm sexp
 BENCHMARKS=python
