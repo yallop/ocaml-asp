@@ -214,7 +214,7 @@ struct
 
   module Python_fix = Fixes.Fix(Python_index)
 
-  let f =
+  let parse =
     let open Python_index in
     let open Python_fix in
     let r : type a. resolve -> a t -> a P2.t =
@@ -253,7 +253,6 @@ struct
                     !~COLON >>>
                     !Suite
                   $ ignore
-
        | Parameters -> !~LPAR >>> maybe !Typedargslist >>> !~RPAR
                      $ ignore
        | Typedargslist ->
@@ -322,11 +321,9 @@ struct
                            maybe (!~KW_finally >>> !~COLON >>> !Suite) $ ignore)
                          <|> (!~KW_finally >>> !~COLON >>> !Suite $ ignore))
                      $ ignore
-
        | With_stmt -> !~KW_with >>> !With_item >>> star (!~COMMA >>> !With_item) >>> !~COLON >>> !Suite
                     $ ignore
        | With_item -> !Test >>> maybe (!~KW_as >>> !Expr) $ ignore
-
        | Except_clause -> !~KW_except >>> (maybe !Test >>> (maybe (!~KW_as >>> !~NAME))) $ ignore
        | Suite -> !Simple_stmt <|> !~NEWLINE >>> !~INDENT >>> plus !Stmt >>> !~DEDENT $ ignore
        | Test -> (!Or_test >>> maybe (!~KW_if >>> !Or_test >>> !~KW_else >>> !Test) $ ignore)
@@ -338,7 +335,6 @@ struct
        | And_test -> !Not_test >>> star (!~KW_and >>> !Not_test) $ ignore
        | Not_test -> (!~KW_not >>> !Not_test) <+> !Comparison $ ignore
        | Comparison -> !Expr >>> star (comp_op >>> !Expr) $ ignore
-
        | Star_expr -> !~STAR >>> !Expr $ ignore
        | Expr -> !Xor_expr >>> star (!~VBAR >>> !Xor_expr) $ ignore
        | Xor_expr -> !And_expr >>> star (!~CIRCUMFLEX >>> !And_expr) $ ignore
@@ -397,10 +393,7 @@ struct
        | Yield_arg -> (!~KW_from >>> !Test $ ignore) <|> !Testlist
     in fixn { r } Stmt
 
-  let parse =
-    assert false
-
-  let parser : P2.token Stream.t -> int =
+  let parser : P2.token Stream.t -> unit =
     P2.parse (P2.type_check parse)
 
   let unstaged_complete : string -> int =

@@ -84,7 +84,7 @@ struct
   type r = { r : 'a. resolve -> 'a Index.t -> 'a P2.t }
 
   let fixn (r : r) index =
-    let rec r' = { cache = []; resolve = fun i -> r.r r' i } in
+    let rec r' = { cache = []; resolve = fun i -> !! r' i } in
     fix @@ fun x -> push index x r'; r'.resolve index
 end
 
