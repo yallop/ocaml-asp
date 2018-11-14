@@ -256,26 +256,29 @@ struct
 
        | Parameters -> !~LPAR >>> maybe !Typedargslist >>> !~RPAR
                      $ ignore
-
-  (* typedargslist: (tfpdef ['=' test] (',' tfpdef ['=' test])* [',' [
-   *         '*' [tfpdef] (',' tfpdef ['=' test])* [',' ['**' tfpdef [',']]]
-   *       | '**' tfpdef [',']]]
-   *   | '*' [tfpdef] (',' tfpdef ['=' test])* [',' ['**' tfpdef [',']]]
-   *   | '**' tfpdef [',']) *)
-(* TODO *)
-       | Typedargslist -> eps ()
-
-       | Tfpdef -> !~NAME >>> maybe (!~COLON >>> !Test) $ ignore
-
-  (* varargslist: (vfpdef ['=' test] (',' vfpdef ['=' test])* [',' [
-   *         '*' [vfpdef] (',' vfpdef ['=' test])* [',' ['**' vfpdef [',']]]
-   *       | '**' vfpdef [',']]]
-   *   | '*' [vfpdef] (',' vfpdef ['=' test])* [',' ['**' vfpdef [',']]]
-   *   | '**' vfpdef [',']
-   * ) *)
-(* TODO *)
-       | Varargslist -> eps ()
-
+       | Typedargslist ->
+          let tfpdefeqtest = !Tfpdef >>> maybe (!~EQUAL >>> !Test) $ ignore in
+          let doublestarbit = !~DOUBLESTAR >>> !Tfpdef >>> maybe !~COMMA $ ignore in
+          let starbit = !~STAR >>> maybe !Tfpdef >>> star (!~COMMA >>> tfpdefeqtest) >>>
+                          maybe (!~COMMA >>> maybe doublestarbit) $ ignore
+          in
+          (tfpdefeqtest >>> star (!~COMMA >>> tfpdefeqtest) >>>
+             maybe (!~COMMA >>> maybe (starbit <|> doublestarbit))) $ ignore
+          <|> starbit
+          <|> doublestarbit
+          $ ignore
+       | Varargslist ->
+          (* NB: the structure is identical to Typedargslist. We could abstract *)
+          let tfpdefeqtest = !Tfpdef >>> maybe (!~EQUAL >>> !Test) $ ignore in
+          let doublestarbit = !~DOUBLESTAR >>> !Tfpdef >>> maybe !~COMMA $ ignore in
+          let starbit = !~STAR >>> maybe !Tfpdef >>> star (!~COMMA >>> tfpdefeqtest) >>>
+                          maybe (!~COMMA >>> maybe doublestarbit) $ ignore
+          in
+          (tfpdefeqtest >>> star (!~COMMA >>> tfpdefeqtest) >>>
+             maybe (!~COMMA >>> maybe (starbit <|> doublestarbit))) $ ignore
+          <|> starbit
+          <|> doublestarbit
+          $ ignore
        | Stmt -> !Simple_stmt <|> !Compound_stmt $ ignore
        | Simple_stmt -> !Small_stmt >>> star (!~SEMI >>> !Small_stmt) >>> maybe !~SEMI >>> !~NEWLINE
                       $ ignore
