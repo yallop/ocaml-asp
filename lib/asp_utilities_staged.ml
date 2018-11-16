@@ -47,9 +47,13 @@ struct
     (digit >>> star digit)
     $ fun s -> .< Asp.Utilities.Unstaged.Unstaged.toInt (fst .~s :: snd .~s) >.
 
+  let dot = complement ""
+
+  let ssnd p = .< snd .~p >.
+
   let string =
     let open Unstaged in
-    (chr '"' >>> star (complement "\"") >>> chr '"')
+    (chr '"' >>> star (complement "\"\\" <|> (chr '\\' >>> dot $ ssnd)) >>> chr '"')
     $ fun s -> .< toString (snd (fst .~s)) >.
 end
 
