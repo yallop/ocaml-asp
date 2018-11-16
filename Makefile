@@ -17,7 +17,13 @@ bench-%: %_benchmark.native
         # so we need a bigger stack.
 	ulimit -s unlimited
 	cp _build/lib/*.cm* _build/benchmarks/$*
-	cd _build/benchmarks/$*   && ./$*_benchmark.native  -quota 0.3
+	cd _build/benchmarks/$*   && \
+           ./$*_benchmark.native  -quota 1                \
+                                  -ci-absolute            \
+                                  -ascii -display blank   \
+                                  -clear-columns          \
+                                  -all-values             \
+                                  +time
 
 %.native %.cma %.cmxa:
 	$(OCAMLBUILD) $@
