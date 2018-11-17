@@ -2,7 +2,7 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind -ocamlc '-toolchain metaocaml ocamlc' \
                                      -ocamlopt '-toolchain metaocaml ocamlopt' \
                                      -ocamldep 'ocamldep -as-map'
 
-BENCHMARKS=intexp pgn ppm sexp
+BENCHMARKS=json intexp pgn ppm sexp
 
 all: precheck lib
 lib:

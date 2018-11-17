@@ -6,7 +6,16 @@
  *)
 
 let filenames = [
-    1, "../../../benchmarks/json/data/all.json"
+    (* 1, "../../../benchmarks/json/data/all.json" *)
+    20, "../../../benchmarks/json/data/collect_20.json";
+    40, "../../../benchmarks/json/data/collect_40.json";
+    60, "../../../benchmarks/json/data/collect_60.json";
+    80, "../../../benchmarks/json/data/collect_80.json";
+    100, "../../../benchmarks/json/data/collect_100.json";
+    120, "../../../benchmarks/json/data/collect_120.json";
+    140, "../../../benchmarks/json/data/collect_140.json";
+    160, "../../../benchmarks/json/data/collect_160.json";
+    180, "../../../benchmarks/json/data/collect_180.json";
   ]
 let args = List.map fst filenames
 let files = List.map (fun (size, filename) -> (size, Core.In_channel.read_all filename)) filenames
