@@ -3,6 +3,7 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind -ocamlc '-toolchain metaocaml ocamlc' \
                                      -ocamldep 'ocamldep -as-map'
 
 BENCHMARKS=json intexp pgn ppm sexp
+QUOTA ?= 120
 
 all: precheck lib
 lib:
@@ -18,7 +19,7 @@ bench-%: %_benchmark.native
 	ulimit -s unlimited
 	cp _build/lib/*.cm* _build/benchmarks/$*
 	cd _build/benchmarks/$*   && \
-           ./$*_benchmark.native  -quota 1                \
+           ./$*_benchmark.native  -quota $(QUOTA)         \
                                   -ci-absolute            \
                                   -ascii -display blank   \
                                   -clear-columns          \
