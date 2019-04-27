@@ -15,9 +15,11 @@
     typically outperforms parsers written with the standard OCaml
     parser-generator `ocamlyacc`
     
-The blog post [A typed, algebraic approach to parsing][blog-post]
-gives a more complete introduction.  The [draft paper][paper] of the
-same name has many more details.
+The following paper has many more details:
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A typed, algebraic approach to parsing ([pdf][paper])  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Neelakantan R. Krishnaswami and Jeremy Yallop  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLDI 2019
 
 ## Installation
 
@@ -45,8 +47,7 @@ same name has many more details.
 
 Clone the repository and type `make bench`.
 
-[blog-post]: http://semantic-domain.blogspot.com/2018/07/a-typed-algebraic-approach-to-parsing.html
-[paper]: http://www.cl.cam.ac.uk/~nk480/parsing.pdf
+[paper]: https://www.cl.cam.ac.uk/~jdy22/papers/a-typed-algebraic-approach-to-parsing.pdf
 [opam]: https://opam.ocaml.org/
 [letrec]: https://github.com/yallop/metaocaml-letrec
 [ber-metaocaml]: http://okmij.org/ftp/ML/MetaOCaml.html
