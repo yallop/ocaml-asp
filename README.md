@@ -19,7 +19,12 @@ The following paper has many more details:
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A typed, algebraic approach to parsing ([pdf][paper])  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Neelakantan R. Krishnaswami and Jeremy Yallop  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLDI 2019
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;PLDI 2019  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(received Distinguished Paper Award &amp; Distinguished Artifact Award)
+
+## Trying out asp
+
+The [pldi-artifact](pldi-artifact) directory contains instructions for running the artifact, which can be used to try out the library and reproduce the benchmarks without installing the software.
 
 ## Installation
 
