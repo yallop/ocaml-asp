@@ -1,0 +1,26 @@
+  Name                       Time R^2     Time/Run                95ci  
+ -------------------------- ---------- ------------ ------------------- 
+  ocamlyacc_intexp:262144        1.00      24.85ms     -0.08ms +0.10ms  
+  ocamlyacc_intexp:524288        1.00      50.31ms     -0.13ms +0.16ms  
+  ocamlyacc_intexp:786432        1.00      75.70ms     -0.11ms +0.10ms  
+  ocamlyacc_intexp:1048576       1.00     100.78ms     -0.17ms +0.16ms  
+  ocamlyacc_intexp:1310720       1.00     126.94ms     -0.26ms +0.22ms  
+  ocamlyacc_intexp:1572864       1.00     152.74ms     -0.27ms +0.30ms  
+  ocamlyacc_intexp:1835008       1.00     180.50ms     -0.88ms +1.10ms  
+  ocamlyacc_intexp:2097152       1.00     204.51ms     -0.48ms +0.45ms  
+  staged_intexp:262144           1.00      17.33ms     -0.09ms +0.09ms  
+  staged_intexp:524288           1.00      34.82ms     -0.19ms +0.22ms  
+  staged_intexp:786432           1.00      52.01ms     -0.07ms +0.08ms  
+  staged_intexp:1048576          1.00      69.98ms     -0.27ms +0.30ms  
+  staged_intexp:1310720          1.00      88.07ms     -0.10ms +0.10ms  
+  staged_intexp:1572864          1.00     107.33ms     -0.24ms +0.24ms  
+  staged_intexp:1835008          1.00     127.10ms     -0.45ms +0.41ms  
+  staged_intexp:2097152          1.00     144.10ms     -0.36ms +0.46ms  
+  unstaged_intexp:262144         1.00     214.28ms     -0.21ms +0.21ms  
+  unstaged_intexp:524288         1.00     427.40ms     -0.44ms +0.45ms  
+  unstaged_intexp:786432         1.00     647.38ms     -1.78ms +1.97ms  
+  unstaged_intexp:1048576        1.00     867.60ms     -4.78ms +6.25ms  
+  unstaged_intexp:1310720        1.00   1_081.24ms     -2.00ms +1.89ms  
+  unstaged_intexp:1572864        1.00   1_296.64ms    -9.93ms +11.68ms  
+  unstaged_intexp:1835008        1.00   1_493.58ms   -13.28ms +14.09ms  
+  unstaged_intexp:2097152        1.00   1_721.80ms     -9.49ms +5.04ms  
