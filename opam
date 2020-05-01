@@ -1,12 +1,13 @@
-opam-version: "1.2"
+opam-version: "2.0"
 name: "asp"
 version: "dev"
+synopsis: "Algebraic, staged parsing library"
 maintainer: "yallop@gmail.com"
 authors: ["Neel Krishnaswami <nk480@cl.cam.ac.uk>"
           "Jeremy Yallop <yallop@gmail.com>"]
 homepage: "https://github.com/yallop/ocaml-asp"
-dev-repo: "http://github.com/yallop/ocaml-asp.git"
-bug-reports: "http://github.com/yallop/ocaml-asp/issues"
+dev-repo: "git+https://github.com/yallop/ocaml-asp.git"
+bug-reports: "https://github.com/yallop/ocaml-asp/issues"
 license: "MIT"
 build: [[make]]
 build-test: [[make "test" "bench"]]
@@ -21,5 +22,7 @@ depends: [
    "core_bench"      {test}
    "ounit"           {test}
    "conf-python-2-7" {test}
+   "ocaml-variants"
+     {= "4.07.1+BER" | = "4.04.0+BER" }
 ]
-available: [ compiler = "4.07.1+BER" | compiler = "4.04.0+BER" ]
+
