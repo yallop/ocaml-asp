@@ -35,16 +35,16 @@ The [pldi-artifact](pldi-artifact) directory contains instructions for running t
    eval $(opam env)
    ```
 
-2. Pin the [`letrec` package][letrec]:
+2. Add the [metaocaml-opam][metaocaml-opam] repository:
 
    ```
-   opam pin add letrec https://github.com/yallop/metaocaml-letrec.git
+   opam remote add metaocaml git+https://github.com/metaocaml/metaocaml-opam.git
    ```
 
-3. Pin the `asp` package:
+3. Install the `asp` package:
 
    ```
-   opam pin add asp https://github.com/yallop/ocaml-asp.git
+   opam install asp
    ```
 
 
@@ -56,3 +56,4 @@ Clone the repository and type `make bench`.
 [opam]: https://opam.ocaml.org/
 [letrec]: https://github.com/yallop/metaocaml-letrec
 [ber-metaocaml]: http://okmij.org/ftp/ML/MetaOCaml.html
+[metaocaml-opam]: https://github.com/metaocaml/metaocaml-opam/
