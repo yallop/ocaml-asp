@@ -13,12 +13,10 @@ struct
   open Parsetree
 
   let pattern : pattern_desc -> pattern =
-    fun ppat_desc ->
-    { ppat_desc; ppat_loc = Location.none; ppat_attributes = [] }
+    Ast_helper.Pat.mk
 
   let expression : expression_desc -> expression =
-    fun pexp_desc ->
-    { pexp_desc; pexp_loc = Location.none; pexp_attributes = [] }
+    Ast_helper.Exp.mk
 
   let interval : char -> char -> pattern =
     fun l h -> if l <> h then pattern @@ Ppat_interval (Pconst_char l, Pconst_char h)

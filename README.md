@@ -31,7 +31,7 @@ The [pldi-artifact](pldi-artifact) directory contains instructions for running t
 1. Install the [BER MetaOCaml][ber-metaocaml] compiler using [OPAM][opam]:
 
    ```
-   opam switch 4.07.1+BER
+   opam switch 4.11.1+BER
    eval $(opam env)
    ```
 
