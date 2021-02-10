@@ -23,6 +23,6 @@ depends: [
    "ounit"           {test}
    "conf-python-2-7" {test}
    "ocaml-variants"
-     {= "4.07.1+BER" | = "4.04.0+BER" }
+     {= "4.07.1+BER" | = "4.04.0+BER" | = "4.11.1+BER" }
 ]
 
