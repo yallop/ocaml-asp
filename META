@@ -1,4 +1,4 @@
-version = "0.1.1"
+version = "0.1.2"
 description = "A staged, typed, algebraic parser combinator library"
 requires = "letrec"
 archive(byte) = "asp.cma"
