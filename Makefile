@@ -45,7 +45,8 @@ install: lib
 	   _build/lib/asp_utilities.cmi		\
 	   _build/lib/asp_utilities_staged.cmi	\
            _build/lib/asp.cma			\
-           _build/lib/asp.cmxa
+           _build/lib/asp.cmxa			\
+           _build/lib/asp.a
 
 
 uninstall:
