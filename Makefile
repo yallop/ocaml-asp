@@ -4,7 +4,7 @@ OCAMLBUILD=ocamlbuild -use-ocamlfind -ocamlc '-toolchain metaocaml ocamlc' \
 
 BENCHMARKS=json intexp pgn ppm sexp
 
-all: precheck lib
+all: lib
 lib:
 	$(OCAMLBUILD) asp.cma asp.cmxa
 
@@ -52,19 +52,7 @@ install: lib
 uninstall:
 	ocamlfind remove asp
 
-precheck:
-	@echo -n "checking OPAM compiler switch ... "
-	@test $$(opam switch  show) = "4.11.1+BER"  \
-      || test $$(opam switch  show) = "4.07.1+BER"  \
-      || test $$(opam switch  show) = "4.04.0+BER"  \
-      || (echo 1>&2 "Please use OPAM switch 4.04.0+BER, 4.07.1+BER or 4.11.1+BER"; exit 1)
-	@echo "ok"
-	@echo -n "checking packages ... "
-	ocamlfind query letrec >/dev/null \
-             || (echo >&2 "\n\n\tpackage letrec is not installed\n\n\tCheck the README for instructions\n"; exit 1)
-	@echo "ok"
-
 clean:
 	$(OCAMLBUILD) -clean
 
-.PHONY: bench test all lib install uninstall precheck
+.PHONY: bench test all lib install uninstall
