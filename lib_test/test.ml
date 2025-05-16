@@ -7,7 +7,7 @@
 
 open OUnit2
 
-module SC = Asp.Staged.Parse(Asp_utilities.Char_element)
+module SC = Asp_staged.Parse(Asp_utilities.Char_element)
 open SC
 
 module StringParser = Parser(Asp_streamcode.Stringcode)
@@ -18,7 +18,7 @@ let build_parser m = Runnative.run (StringParser.compile m)
 let build_channel_parser m = Runnative.run (ChannelParser.compile m)
 
 let test_digits _ =
-  let digit = Asp.Utilities.Staged.Charparsing.digit
+  let digit = Asp_utilities_staged.Charparsing.digit
               $ fun x -> .< Char.code .~x - Char.code '0' >. in
 
   (* digits with 'star' *)

@@ -18,11 +18,13 @@ depends: [
    "ocamlbuild" {build}
 
    "letrec"
+   "camlp-streams"
+   "charmatch"
 
    "core_bench"      {test}
    "ounit"           {test}
    "conf-python-2-7" {test}
    "ocaml-variants"
-     {= "4.07.1+BER" | = "4.04.0+BER" | = "4.11.1+BER"  | = "4.14.1+BER" }
+     {= "4.07.1+BER" | = "4.04.0+BER" | = "4.11.1+BER"  | = "4.14.1+BER" | = "5.3.0+BER" }
 ]
 
