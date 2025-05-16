@@ -5,7 +5,7 @@
  * See the file LICENSE for details.
  *)
 
-open Asp.Unstaged
+open Asp_unstaged
 
 module Stream = struct
   include Stream

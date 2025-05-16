@@ -84,6 +84,8 @@ struct
 
   let char_of_tag : type a.a tag -> char = function (Chr c) -> c
 
+  module Asp_char_patmatch = Charmatch.Make(CharSet)
+
   let test_tag : type a b.complete:bool -> a tag list -> t code -> (a code option -> b code) -> b code =
     fun ~complete cs c' k ->
     if complete then k (Some (Obj.magic c')) else
